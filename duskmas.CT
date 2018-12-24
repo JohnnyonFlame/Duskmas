@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="28">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>0</ID>
+      <Description>"Disable In-Fighting"</Description>
+      <LastState Activated="0"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>
+[ENABLE]
+{$lua}
+if LaunchMonoDataCollector() ~= 0 then
+  local bas_updt_hnd = mono_findMethod('Assembly-CSharp', 'BasicAIScript', 'Update')
+  local vec3_op_ineq = mono_findMethod('UnityEngine', 'Vector3', 'op_Inequality')
+  if ((bas_updt_hnd ~= 0) and (vec3_op_ineq)) then
+     mono_compile_method(bas_updt_hnd)
+     mono_compile_method(vec3_op_ineq)
+  else
+      print("Failed to jit one or more functions.")
+  end
+end
+
+{$asm}
+
+aobscan(INJECT,48 8D 08 90 49 BB ???????????????? 41 FF D3 85 C0 0F84 16000000 33 C0 F3 0F2A C0 F3 0F5A C0 F2 0F5A E8 F3 0F 11 AE 08 03 00 00 0F B6 86 50 02 00 00) // should be unique
+alloc(newmem,$1000,14B9F08230E)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  push rax
+  xor rax, rax
+  cmp byte ptr [rsi+30c], 01
+  je endof
+  mov [rsi+160], rax
+endof:
+  pop rax
+  lea rcx, [rax]
+  nop
+  mov r11, "UnityEngine:Vector3:op_Inequality"
+  jmp return
+
+INJECT:
+  jmp newmem
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+
+INJECT:
+  lea rcx,[rax]
+  nop
+  mov r11, "UnityEngine:Vector3:op_Inequality"
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+</AssemblerScript>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+</CheatTable>
